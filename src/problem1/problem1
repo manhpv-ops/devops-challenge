@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Usage: ./problem1 <symbol> <action>
+
+set -e
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <symbol> <action>"
+    exit 1
+fi
+
+SYMBOL=$1
+ACTION=$2
+LOG_FILE="./transaction-log.txt"
+OUTPUT_FILE="./output.txt"
+
+echo "[INFO] Starting processing for Symbol: $SYMBOL, Action: $ACTION"
+
+if [ ! -f "$LOG_FILE" ]; then
+    echo "Error: $LOG_FILE not found in the current directory."
+    exit 1
+fi
+
+echo "[INFO] Checking dependencies..."
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is not installed. Please install it (e.g., sudo apt-get install jq)."
+    exit 1
+fi
+
+# Clear the output file
+echo "[INFO] Preparing output file: $OUTPUT_FILE"
+> "$OUTPUT_FILE"
+
+# Filter the log file and perform requests
+# We assume the log file is in JSON Lines format.
+echo "[INFO] Filtering log file..."
+ORDER_IDS=$(jq -r --arg s "$SYMBOL" --arg a "$ACTION" 'select(.symbol == $s and .side == $a) | .order_id' "$LOG_FILE")
+
+if [ -z "$ORDER_IDS" ]; then
+    echo "[INFO] Found 0 matching orders."
+else
+    MATCH_COUNT=$(echo "$ORDER_IDS" | wc -l | tr -d ' ')
+    echo "[INFO] Found $MATCH_COUNT matching orders."
+    for id in $ORDER_IDS; do
+        echo "[INFO] Processing Order ID: $id"
+        curl -s "https://example.com/api/$id" >> "$OUTPUT_FILE"
+    done
+fi
+
+echo "[INFO] Task completed successfully."
