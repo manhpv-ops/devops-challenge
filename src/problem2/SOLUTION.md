@@ -20,7 +20,7 @@ graph TD
     User -->|HTTPS| APIG[API Gateway]
     
     subgraph "Public Zone"
-        CF --> S3[S3 Bucket (Static Assets)]
+        CF --> S3["S3 Bucket (Static Assets)"]
         ALB --> FE[Frontend Service]
     end
     
